@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <meta name="description" content="Aplikasi pencatat keuangan pribadi.">
+  <title>Keuangan Saya</title>
+
+  <link rel="stylesheet" href="style.css">
+  <link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+  <div id="lockScreen" class="lock-screen hidden">
+    <div class="lock-card">
+      <div class="app-logo">K</div>
+      <h2>Keuangan Saya</h2>
+      <p id="lockMessage">Masukkan PIN untuk membuka aplikasi.</p>
+      <form id="pinForm">
+        <input id="pinInput" type="password" inputmode="numeric"
+          maxlength="6" placeholder="Masukkan PIN" required>
+        <button class="btn primary full" type="submit">Buka Aplikasi</button>
+      </form>
+      <button id="resetPinButton" class="text-button hidden" type="button">
+        Atur ulang PIN
+      </button>
+    </div>
+  </div>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-logo">K</div>
+      <div>
+        <strong>Keuangan Saya</strong>
+        <small>Kelola uang lebih teratur</small>
+      </div>
+    </div>
+    <button id="themeButton" class="icon-button" title="Ubah tema">☾</button>
+  </header>
+
+  <main class="container">
+
+    <section class="welcome">
+      <div>
+        <p class="muted">Selamat datang 👋</p>
+        <h1>Ringkasan Keuangan</h1>
+        <p id="todayText" class="muted"></p>
+      </div>
+      <button id="toggleBalance" class="icon-button" title="Sembunyikan saldo">◉</button>
+    </section>
+
+    <section class="balance-card">
+      <p>Total Saldo</p>
+      <h2 id="totalBalance">Rp0</h2>
+      <div class="balance-details">
+        <div>
+          <small>Total Pemasukan</small>
+          <strong id="totalIncome">Rp0</strong>
+        </div>
+        <div>
+          <small>Total Pengeluaran</small>
+          <strong id="totalExpense">Rp0</strong>
+        </div>
+      </div>
+    </section>
+
+    <section class="quick-actions">
+      <button class="action-button" data-open="transaction">
+        <span class="action-icon income-icon">＋</span>
+        <span>Pemasukan</span>
+      </button>
+      <button class="action-button" data-open="transaction">
+        <span class="action-icon expense-icon">－</span>
+        <span>Pengeluaran</span>
+      </button>
+      <button class="action-button" data-open="transaction">
+        <span class="action-icon transfer-icon">⇄</span>
+        <span>Transfer</span>
+      </button>
+      <button class="action-button" data-open="calculator">
+        <span class="action-icon calc-icon">⌗</span>
+        <span>Kalkulator</span>
+      </button>
+    </section>
+
+    <nav class="navigation">
+      <button class="nav-button active" data-view="dashboard">Beranda</button>
+      <button class="nav-button" data-view="transactions">Transaksi</button>
+      <button class="nav-button" data-view="savings">Tabungan</button>
+      <button class="nav-button" data-view="debts">Utang-Piutang</button>
+      <button class="nav-button" data-view="more">Lainnya</button>
+    </nav>
+
+    <!-- DASHBOARD -->
+    <section id="view-dashboard" class="view active">
+      <div class="section-heading">
+        <h2>Ringkasan Bulan Ini</h2>
+        <span id="monthLabel" class="muted"></span>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <span class="stat-icon income-icon">↗</span>
+          <small>Pemasukan</small>
+          <strong id="monthIncome">Rp0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-icon expense-icon">↘</span>
+          <small>Pengeluaran</small>
+          <strong id="monthExpense">Rp0</strong>
+        </article>
+      </div>
+
+      <article class="panel">
+        <div class="section-heading">
+          <h3>Saldo per Akun</h3>
+          <button class="small-button" data-view-link="settings">Kelola akun</button>
+        </div>
+        <div id="accountSummary"></div>
+      </article>
+
+      <article class="panel">
+        <div class="section-heading">
+          <h3>Transaksi Terbaru</h3>
+          <button class="small-button" data-view-link="transactions">Lihat semua</button>
+        </div>
+        <div id="recentTransactions" class="item-list"></div>
+      </article>
+
+      <article class="panel">
+        <h3>Ringkasan Utang-Piutang</h3>
+        <div class="stats-grid">
+          <div>
+            <small class="muted">Utang saya</small>
+            <strong id="dashboardDebt">Rp0</strong>
+          </div>
+          <div>
+            <small class="muted">Piutang saya</small>
+            <strong id="dashboardReceivable">Rp0</strong>
+          </div>
+        </div>
+      </article>
+    </section>
+
+    <!-- TRANSACTIONS -->
+    <section id="view-transactions" class="view">
+      <div class="section-heading">
+        <h2>Transaksi</h2>
+        <button class="btn primary" id="newTransactionButton">＋ Tambah</button>
+      </div>
+
+      <form id="transactionForm" class="panel form-panel">
+        <div class="section-heading">
+          <h3 id="transactionFormTitle">Tambah Transaksi</h3>
+          <button type="button" class="text-button" id="cancelTransaction">Tutup</button>
+        </div>
+
+        <input type="hidden" id="transactionId">
+
+        <label>Jenis transaksi</label>
+        <select id="transactionType" required>
+          <option value="expense">Pengeluaran</option>
+          <option value="income">Pemasukan</option>
+          <option value="transfer">Transfer</option>
+        </select>
+
+        <label>Nominal</label>
+        <input id="transactionAmount" type="number" min="1"
+          step="1" placeholder="Contoh: 50000" required>
+
+        <label>Keterangan</label>
+        <input id="transactionNote" type="text"
+          placeholder="Contoh: Belanja makanan">
+
+        <label>Tanggal</label>
+        <input id="transactionDate" type="date" required>
+
+        <div id="singleAccountFields">
+          <label>Akun</label>
+          <select id="transactionAccount"></select>
+        </div>
+
+        <div id="transferFields" class="hidden">
+          <label>Dari akun</label>
+          <select id="transferFrom"></select>
+          <label>Ke akun</label>
+          <select id="transferTo"></select>
+        </div>
+
+        <label>Kategori</label>
+        <select id="transactionCategory">
+          <option>Makanan</option>
+          <option>Transportasi</option>
+          <option>Belanja</option>
+          <option>Tagihan</option>
+          <option>Kesehatan</option>
+          <option>Pendidikan</option>
+          <option>Hiburan</option>
+          <option>Gaji</option>
+          <option>Bisnis</option>
+          <option>Lainnya</option>
+        </select>
+
+        <button class="btn primary full" type="submit">Simpan Transaksi</button>
+      </form>
+
+      <div class="filter-row">
+        <input id="transactionSearch" type="search" placeholder="Cari transaksi...">
+        <select id="transactionFilter">
+          <option value="all">Semua</option>
+          <option value="income">Pemasukan</option>
+          <option value="expense">Pengeluaran</option>
+          <option value="transfer">Transfer</option>
+        </select>
+      </div>
+
+      <div id="transactionList" class="item-list panel"></div>
+    </section>
+
+    <!-- SAVINGS -->
+    <section id="view-savings" class="view">
+      <div class="section-heading">
+        <h2>Tabungan</h2>
+        <button class="btn primary" id="newSavingButton">＋ Target</button>
+      </div>
+
+      <form id="savingForm" class="panel form-panel">
+        <div class="section-heading">
+          <h3>Tambah Target Tabungan</h3>
+          <button type="button" class="text-button" id="cancelSaving">Tutup</button>
+        </div>
+        <label>Nama target</label>
+        <input id="savingName" type="text" placeholder="Contoh: Beli laptop" required>
+        <label>Target nominal</label>
+        <input id="savingTarget" type="number" min="1" required>
+        <label>Jumlah awal</label>
+        <input id="savingInitial" type="number" min="0" value="0">
+        <label>Target tanggal (opsional)</label>
+        <input id="savingDeadline" type="date">
+        <button class="btn primary full" type="submit">Simpan Target</button>
+      </form>
+
+      <div id="savingList" class="item-list"></div>
+    </section>
+
+    <!-- DEBTS -->
+    <section id="view-debts" class="view">
+      <div class="section-heading">
+        <h2>Utang-Piutang</h2>
+        <button class="btn primary" id="newDebtButton">＋ Tambah</button>
+      </div>
+
+      <div class="stats-grid">
+        <article class="stat-card">
+          <small>Total Utang</small>
+          <strong id="totalDebt">Rp0</strong>
+        </article>
+        <article class="stat-card">
+          <small>Total Piutang</small>
+          <strong id="totalReceivable">Rp0</strong>
+        </article>
+      </div>
+
+      <form id="debtForm" class="panel form-panel">
+        <div class="section-heading">
+          <h3>Tambah Catatan</h3>
+          <button type="button" class="text-button" id="cancelDebt">Tutup</button>
+        </div>
+        <label>Jenis</label>
+        <select id="debtType">
+          <option value="debt">Utang saya</option>
+          <option value="receivable">Piutang saya</option>
+        </select>
+        <label>Nama orang</label>
+        <input id="debtPerson" type="text" placeholder="Nama orang" required>
+        <label>Nominal</label>
+        <input id="debtAmount" type="number" min="1" required>
+        <label>Catatan</label>
+        <input id="debtNote" type="text" placeholder="Keterangan (opsional)">
+        <label>Jatuh tempo</label>
+        <input id="debtDueDate" type="date">
+        <button class="btn primary full" type="submit">Simpan Catatan</button>
+      </form>
+
+      <div id="debtList" class="item-list"></div>
+    </section>
+
+    <!-- MORE -->
+    <section id="view-more" class="view">
+      <h2>Fitur Lainnya</h2>
+
+      <div class="feature-grid">
+        <button class="feature-card" data-view-link="budget">
+          <span>🎯</span><strong>Anggaran</strong>
+          <small>Atur batas pengeluaran</small>
+        </button>
+        <button class="feature-card" data-view-link="reports">
+          <span>📊</span><strong>Laporan</strong>
+          <small>Lihat kondisi keuangan</small>
+        </button>
+        <button class="feature-card" data-view-link="calculator">
+          <span>🧮</span><strong>Kalkulator</strong>
+          <small>Hitung nominal</small>
+        </button>
+        <button class="feature-card" data-view-link="settings">
+          <span>⚙️</span><strong>Pengaturan</strong>
+          <small>Akun dan keamanan</small>
+        </button>
+      </div>
+    </section>
+
+    <!-- BUDGET -->
+    <section id="view-budget" class="view">
+      <h2>Anggaran Bulanan</h2>
+      <form id="budgetForm" class="panel">
+        <label>Batas pengeluaran bulan ini</label>
+        <input id="budgetLimit" type="number" min="0" placeholder="Contoh: 2000000">
+        <button class="btn primary full" type="submit">Simpan Anggaran</button>
+      </form>
+      <article class="panel">
+        <div class="section-heading">
+          <h3>Penggunaan Anggaran</h3>
+          <strong id="budgetPercent">0%</strong>
+        </div>
+        <div class="progress-track"><div id="budgetProgress" class="progress-fill"></div></div>
+        <p id="budgetInfo" class="muted"></p>
+      </article>
+    </section>
+
+    <!-- REPORTS -->
+    <section id="view-reports" class="view">
+      <h2>Laporan Keuangan</h2>
+      <article class="panel">
+        <label>Pilih bulan</label>
+        <input id="reportMonth" type="month">
+        <div class="report-row"><span>Pemasukan</span><strong id="reportIncome">Rp0</strong></div>
+        <div class="report-row"><span>Pengeluaran</span><strong id="reportExpense">Rp0</strong></div>
+        <div class="report-row"><span>Selisih</span><strong id="reportDifference">Rp0</strong></div>
+        <div class="divider"></div>
+        <h3>Pengeluaran per Kategori</h3>
+        <div id="categoryReport"></div>
+      </article>
+    </section>
+
+    <!-- CALCULATOR -->
+    <section id="view-calculator" class="view">
+      <h2>Kalkulator</h2>
+      <article class="panel calculator">
+        <input id="calcDisplay" type="text" placeholder="0" readonly>
+        <div class="calculator-grid">
+          <button data-calc="clear" class="calc-clear">AC</button>
+          <button data-calc="back">⌫</button>
+          <button data-calc="%">%</button>
+          <button data-calc="/">÷</button>
+
+          <button data-calc="7">7</button>
+          <button data-calc="8">8</button>
+          <button data-calc="9">9</button>
+          <button data-calc="*" class="calc-op">×</button>
+
+          <button data-calc="4">4</button>
+          <button data-calc="5">5</button>
+          <button data-calc="6">6</button>
+          <button data-calc="-" class="calc-op">−</button>
+
+          <button data-calc="1">1</button>
+          <button data-calc="2">2</button>
+          <button data-calc="3">3</button>
+          <button data-calc="+" class="calc-op">+</button>
+
+          <button data-calc="(">(</button>
+          <button data-calc="0">0</button>
+          <button data-calc=".">.</button>
+          <button data-calc=")" class="calc-op">)</button>
+
+          <button data-calc="equals" class="calc-equals">=</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- SETTINGS -->
+    <section id="view-settings" class="view">
+      <h2>Pengaturan</h2>
+
+      <article class="panel">
+        <h3>Kelola Akun</h3>
+        <form id="accountForm" class="inline-form">
+          <input id="accountName" type="text" placeholder="Nama akun baru" required>
+          <button class="btn primary" type="submit">Tambah</button>
+        </form>
+        <div id="accountList" class="item-list"></div>
+      </article>
+
+      <article class="panel">
+        <h3>Keamanan PIN</h3>
+        <p class="muted">PIN digunakan untuk mengunci tampilan aplikasi pada perangkat ini.</p>
+        <form id="pinSettingsForm">
+          <label>PIN baru (4–6 angka)</label>
+          <input id="newPin" type="password" inputmode="numeric"
+            minlength="4" maxlength="6" placeholder="Masukkan PIN baru">
+          <button class="btn primary full" type="submit">Simpan PIN</button>
+        </form>
+        <button id="removePinButton" class="btn danger full" type="button">Hapus PIN</button>
+      </article>
+
+      <article class="panel">
+        <h3>Cadangan Data</h3>
+        <p class="muted">Simpan data ke file JSON agar bisa dipulihkan kembali.</p>
+        <button id="exportButton" class="btn primary full">Unduh Cadangan JSON</button>
+        <label class="btn secondary full file-label">
+          Impor Cadangan JSON
+          <input id="importFile" type="file" accept=".json,application/json" hidden>
+        </label>
+        <button id="csvButton" class="btn secondary full">Ekspor Transaksi CSV</button>
+      </article>
+
+      <article class="panel">
+        <h3>Data Aplikasi</h3>
+        <button id="resetDataButton" class="btn danger full">Hapus Semua Data</button>
+      </article>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <footer class="footer">
+    Keuangan Saya · Data tersimpan di perangkat ini
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+    </html>
